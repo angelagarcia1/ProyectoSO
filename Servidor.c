@@ -34,12 +34,11 @@ typedef struct{
 
 ListaConectados UsuariosConectados;
 ListaConectados UsuariosPartida;
-ListaConectados SocketConectado;
 ListaPartidas listadePartidas;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int AddUsuarioConectado (ListaConectados *lista, int socket, char nombre[20]) //A�adir un usuario a la lista de conectados
+int AddUsuarioConectado (ListaConectados *lista, int socket, char nombre[20]) //Añadir un usuario a la lista de conectados
 {
 	
 	if (lista->num == 300)
@@ -53,7 +52,7 @@ int AddUsuarioConectado (ListaConectados *lista, int socket, char nombre[20]) //
 	}
 }
 
-int Add (ListaConectados *lista, int socket, char nombre[20]) //Añadir un usuario a la lista de conectados
+int Add (ListaConectados *lista, int socket, char nombre[20]) //AÃ±adir un usuario a la lista de conectados
 {
 	
 	if (lista->num == 300)
@@ -69,10 +68,10 @@ int Add (ListaConectados *lista, int socket, char nombre[20]) //Añadir un usuar
 
 void DameConectados (ListaConectados *lista, char conectados[512]) //Devuelve los usuarios conectados
 {
-	sprintf(conectados,"7/%d-%s",lista->num, lista->sockets[0].usuario);
-	
-	for(int j=1; j< lista->num; j++)
-		sprintf(conectados,"%s\n%s", conectados, lista->sockets[j].usuario);
+	sprintf(conectados,"7/%d/%s",lista->num, lista->sockets[0].usuario);
+	int i;
+	for(int i=1; i< lista->num; i++)
+		sprintf(conectados,"%s/%s", conectados, lista->sockets[i].usuario);
 	
 	printf("Conectados: %s\n",conectados);
 }
@@ -192,10 +191,13 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 			for(int k=0; k<UsuariosConectados.num; k++)
 				write (UsuariosConectados.sockets[k].socket, notificacion, strlen(notificacion));
 			if (eliminar==0)
+			{
 				printf("El usuario se ha eliminado de la lista de conectados\n");
+				strcpy(respuesta,"0/");		
+				write(sock_conn, respuesta, strlen(respuesta));
+			}
 			else
 				printf("El usuario no se ha podido eliminar de la lista de conectados\n");
-			terminar=1;
 		}
 		
 		else if(codigo==1) //Iniciar sesion
@@ -229,17 +231,16 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 							
 							pthread_mutex_lock( &mutex );
 							int res= Add(&UsuariosConectados,sock_conn,usuario);
-							//int res = AddName(&UsuariosConectados,usuario,sock_conn);
 							pthread_mutex_unlock(&mutex);
-							sprintf(notificacion,"7/%d-%s",UsuariosConectados.num,UsuariosConectados.sockets[0].usuario);
+							sprintf(notificacion,"7/%d/%s",UsuariosConectados.num,UsuariosConectados.sockets[0].usuario);
 							for(int j=1; j< UsuariosConectados.num; j++)
-								sprintf(notificacion,"%s\n%s", notificacion, UsuariosConectados.sockets[j].usuario);
+								sprintf(notificacion,"%s/%s", notificacion, UsuariosConectados.sockets[j].usuario);
 							for(int k=0; k<UsuariosConectados.num; k++)
 								write (UsuariosConectados.sockets[k].socket, notificacion, strlen(notificacion));
 							if (res==0)
 							{
 								printf("Notificacion: %s\n",notificacion);
-								printf("El usuario %s se ha añadido a la lista de conectados \n", usuario );
+								printf("El usuario %s se ha aÃ±adido a la lista de conectados \n", usuario );
 							}
 							else
 								printf("La lista de usuarios esta llena");
@@ -390,7 +391,7 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 			write(sock_conn, respuesta, strlen(respuesta));
 			
 		}
-		else if (codigo==5)//Consulta puntos m�x. en una partida
+		else if (codigo==5)//Consulta puntos máx. en una partida
 		{
 			char consulta[80];
 			strcpy(consulta,"SELECT max(Resultado.puntos) FROM Resultado");
@@ -456,32 +457,8 @@ int main(int argc, char *argv[])
 		sock_conn = accept(sock_listen, NULL, NULL);
 		printf ("He recibido conexion \n");
 		
-		pthread_mutex_lock(&mutex); 
-		Add(&SocketConectado,sock_conn," ");
-		pthread_mutex_unlock(&mutex);
-		
-		pthread_create(&thread, NULL, AtenderalCliente,&SocketConectado.sockets[SocketConectado.num-1].socket);
+		pthread_create(&thread, NULL, AtenderalCliente,&sock_conn);
 		
 	}
 }
 	
-	
-	
-	
-	
-
-
-		
-	
-
-	
-	
-
-
-
-
-
-
-
-
-

@@ -33,6 +33,8 @@ namespace Cliente1
         public Iniciar()
         {
             InitializeComponent();
+            DesconectarBtn.Enabled = false;
+            EnviarPet.Enabled = false;
         }
 
         public void PonFormConectar(string m) //Metodo para activar/desactivar algunos botones/text box cuando inicias sesion
@@ -69,6 +71,25 @@ namespace Cliente1
 
                     switch (codigo)
                     {
+                        case 0: //Respuesta a la desconexión
+                            
+                            this.Invoke(new Action(() =>
+                            {
+                                UsuarioTbt.Clear();
+                                ContraseñaTbt.Clear();
+                                listBox_Conectados.Items.Clear();
+                                SignInBtn.Enabled = true;
+                                UsuarioTbt.Enabled = true;
+                                ContraseñaTbt.Enabled = true;
+                                DesconectarBtn.Enabled = false;
+                                EnviarPet.Enabled = false;
+                                RegistrarseBtn.Enabled = true;
+                                
+
+                            }));
+                            break;
+
+
                         case 1: //Recibes la respuesta de iniciar sesion
                             try
                             {
@@ -76,8 +97,17 @@ namespace Cliente1
                                 if (mensaje == "1")
                                 {
                                     MessageBox.Show("Usuario y contraseña correctos");
-                                    this.Invoke(new DelegadoParaPonerTexto(PonFormConectar), new Object[] { UsuarioTbt.Text });
+                                   
+                                    this.Invoke(new Action(() =>
+                                    {
+                                        SignInBtn.Enabled = false;
+                                        UsuarioTbt.Enabled = false;
+                                        ContraseñaTbt.Enabled = false;
+                                        DesconectarBtn.Enabled = true;
+                                        EnviarPet.Enabled = true;
+                                        RegistrarseBtn.Enabled = false;
 
+                                    }));
                                 }
                                 else
                                     MessageBox.Show("Los datos introducidos no son los correctos");
@@ -115,7 +145,7 @@ namespace Cliente1
                                     listBox_consultas.Items.Add("el ganador de la partida 2 es:");
                                     listBox_consultas.Items.Add(mensaje);
                                 }));
-                                break;
+                               
                             }
                             catch (FormatException)
                             {
@@ -135,8 +165,9 @@ namespace Cliente1
                                         listBox_consultas.Items.Add(trozos[i]);
                                 }
                                 }));
-                                break;
+                            
                             }
+
                             catch (FormatException)
                             {
                                 MessageBox.Show("Error al procesar los datos de la respuesta 4");
@@ -152,11 +183,32 @@ namespace Cliente1
                                 listBox_consultas.Items.Add("Máximo de puntos en una partida:");
                                 listBox_consultas.Items.Add(mensaje);
                                 }));
-                                break;
+  
+                            }
+                         
+                            catch (FormatException)
+                            {
+                                MessageBox.Show("Error al procesar los datos de la respuesta 5");
+                            }
+                            break;
+                        case 7: //lista conectados 
+                            try
+                            {
+                                this.Invoke(new Action(() =>
+                                {
+                                    listBox_Conectados.Items.Clear();
+                                    int numero_usuarios = Convert.ToInt32(trozos[1]);
+                                    for (int i = 0; i < numero_usuarios; i++)
+                                    {
+
+                                        listBox_Conectados.Items.Add(trozos[2 + i]);
+                                    }
+                                }));
+
                             }
                             catch (FormatException)
                             {
-                                MessageBox.Show("Error al procesar los datos de la respuesta 4");
+                                MessageBox.Show("Error al procesar los datos de la respuesta 7");
                             }
                             break;
                     }
@@ -238,7 +290,14 @@ namespace Cliente1
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
             }
+            else if (p4.Checked)//Dame lista conectados 
+            {
+                string mensaje;
 
+                mensaje = "6/";
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
 
         }
 
@@ -257,10 +316,23 @@ namespace Cliente1
             string mensaje;
 
             mensaje = "2/";
-            mensaje += UsuarioTbt2.Text + "/" + ContraseñaBtn2.Text;
+            mensaje += UsuarioTbt.Text + "/" + ContraseñaTbt.Text;
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
 
+        }
+
+        private void p3_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void DesconectarBtn_Click(object sender, EventArgs e)
+        {
+            string mensaje;
+            mensaje = "0/";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
         }
     }
 
