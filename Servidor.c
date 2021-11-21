@@ -9,53 +9,45 @@
 #include <pthread.h>
 #include <ctype.h>
 
+#define MAX_USUARIOS   300
+#define MAX_PARTIDAS   10
+
+
 typedef struct{
 	char usuario[20];
 	int socket;
 } Conectado;
 
 typedef struct{
-	Conectado sockets[300];
+	Conectado sockets[MAX_USUARIOS];
 	int num;
 } ListaConectados;
 
 typedef struct{
 	int ID; 
 	char fecha[20];
-	char hora_final[20];
+	char hora_inicio[20];
 	int duracion;
 	char ganador[20];
+	ListaConectados UsuariosPartida;
+	ListaConectados UsuariosInvitados;
 }Partida;
 
 typedef struct{
 	int num;
-	Partida partidas[300];
+	Partida partidas[MAX_PARTIDAS];
 }ListaPartidas;
 
 ListaConectados UsuariosConectados;
-ListaConectados UsuariosPartida;
 ListaPartidas listadePartidas;
+
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int AddUsuarioConectado (ListaConectados *lista, int socket, char nombre[20]) //Añadir un usuario a la lista de conectados
+int Add (ListaConectados *lista, int socket, char nombre[20]) //Añadir un usuario a la lista de conectados
 {
 	
-	if (lista->num == 300)
-		return -1;
-	else {
-		lista->sockets[lista->num].socket=socket;
-		strcpy(lista->sockets[lista->num].usuario,nombre);
-		lista->num++;
-		return 0;
-		
-	}
-}
-
-int Add (ListaConectados *lista, int socket, char nombre[20]) //AÃ±adir un usuario a la lista de conectados
-{
-	
-	if (lista->num == 300)
+	if (lista->num == MAX_USUARIOS)
 		return -1;
 	else {
 		lista->sockets[lista->num].socket=socket;
@@ -102,11 +94,22 @@ int DesconectarUsuario(ListaConectados *lista, char nombre[20]) //Elimina un usu
 	
 }
 
+int DameSocket(ListaConectados *l, char nombre[20])//Devuelve el socket del usuario con ese nombre
+{
+	int found = 0;
+	int i = 0;
+	while((i<l->num) && (strcmp(l->sockets[i].usuario, nombre)!=0))
+		i++;
+	if(i<l->num)
+		found = l->sockets[i].socket;
+	return found;
+}		
+
 int DameNombre(ListaConectados *l, int socket, char nombre[20]) //Devuelve el nombre del usuario con ese socket	
 {
 	int found = 0;
 	int i = 0;
-	while ((found==0) & (i < l->num))
+	while ((found==0) && (i < l->num))
 	{
 		if (l->sockets[i].socket==socket)
 		{
@@ -148,7 +151,7 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 		exit (1);
 	}
 	//Conectamos con la base de datos
-	conn = mysql_real_connect (conn, "shiva2.upc.es","root", "mysql", "M2_BBDDJuego",0, NULL, 0);
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "Juego",0, NULL, 0);
 	if (conn==NULL) 
 	{
 		printf ("Error al inicializar la conexion: %u %s\n",mysql_errno(conn), mysql_error(conn));
@@ -183,7 +186,6 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 			
 			pthread_mutex_lock( &mutex );
 			int eliminar = DesconectarUsuario(&UsuariosConectados, usuario);
-			int eliminar_partida = DesconectarUsuario(&UsuariosPartida, usuario);
 			pthread_mutex_unlock( &mutex );
 			char conectados[300];
 			DameConectados(&UsuariosConectados, conectados); 
@@ -417,8 +419,129 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 			}
 			write(sock_conn, respuesta, strlen(respuesta));
 		}
-		
-		
+		else if (codigo==10)//Crear partida
+		{
+			int indice=0;
+			char usuario[20];
+			DameNombre(&UsuariosConectados,sock_conn,usuario);
+			pthread_mutex_lock( &mutex );
+			if (listadePartidas.num==MAX_PARTIDAS)
+			{
+				indice = -1;
+				printf("Máximo número de partidas alcanzado\n");
+			}
+			else
+			{	
+				//Buscamos un hueco para la partida
+				while(listadePartidas.partidas[indice].ID!=0)
+					indice++;
+				//Creamos la partida
+				int res= Add(&listadePartidas.partidas[indice].UsuariosPartida,sock_conn,usuario);
+				listadePartidas.num++;
+				listadePartidas.partidas[indice].ID=1;
+				if(res!=0)
+					printf("Error al añadir usuario\n");
+			}
+			
+			pthread_mutex_unlock( &mutex );
+			sprintf(respuesta,"10/%d", indice);
+			write(sock_conn, respuesta, strlen(respuesta));
+			
+		}
+		else if (codigo==11)//Iniciar partida
+		{
+			int IndicePartida;
+			p = strtok(NULL, "/");
+			IndicePartida = atoi(p);
+			
+			if(listadePartidas.partidas[IndicePartida].UsuariosInvitados.num == 0)
+				strcpy(respuesta, "15/Servidor: podemos iniciar partida.");
+			else 
+				strcpy(respuesta, "15/Servidor: no se ha podido iniciar la partida. Usuario no confirmado.");
+			for(int i = 0; i<listadePartidas.partidas[IndicePartida].UsuariosPartida.num; i++)
+			{
+				write(listadePartidas.partidas[IndicePartida].UsuariosPartida.sockets[i].socket, respuesta, strlen(respuesta));
+			}
+
+		}
+		else if (codigo==12)//Finalizar partida
+		{
+			
+		}
+		else if (codigo==13)//Comando para enviar invitación(lo recibe el servidor del anfitrión)
+		{
+			char anfitrion[20];
+			DameNombre(&UsuariosConectados,sock_conn,anfitrion);
+			int IndicePartida;
+			char invitado[20];
+			printf("cod 13, p = %s , anfitrion = %s , socket = %d\n", p, anfitrion, sock_conn);
+
+			p=strtok(NULL, "/");
+			IndicePartida = atoi(p);
+			p=strtok(NULL, "/");
+			strcpy(invitado, p);
+			int socketInvitado = DameSocket(&UsuariosConectados, invitado);
+			sprintf(peticion,"14/%d/%s", IndicePartida, anfitrion);
+			write(socketInvitado, peticion, strlen(peticion));
+			pthread_mutex_lock(&mutex);
+			int res = Add(&listadePartidas.partidas[IndicePartida].UsuariosInvitados, socketInvitado, invitado);
+			pthread_mutex_unlock(&mutex);
+			if (res != 0)
+				printf("Error al añadir usuario en invitación\n");
+			for (int i = 0; i < UsuariosConectados.num; i++)
+				printf("conectado %s - %d\n", UsuariosConectados.sockets[i].usuario, UsuariosConectados.sockets[i].socket);
+
+			for (int i = 0; i < listadePartidas.partidas[IndicePartida].UsuariosInvitados.num; i++)
+				printf("invitado %s\n", listadePartidas.partidas[IndicePartida].UsuariosInvitados.sockets[i].usuario);
+			for (int i = 0; i < listadePartidas.partidas[IndicePartida].UsuariosPartida.num; i++)
+				printf("en partida %s\n", listadePartidas.partidas[IndicePartida].UsuariosPartida.sockets[i].usuario);
+
+		}
+		else if (codigo==14)//Respuesta a invitación enviada
+		{
+			char invitado[20];
+			DameNombre(&UsuariosConectados, sock_conn, invitado);
+			int IndicePartida;
+			char anfitrion[20];
+			char sino[3];
+			printf("cod 14, p = %s , invitado = %s , socket = %d\n",p,invitado,sock_conn);
+			p = strtok(NULL, "/");
+			IndicePartida = atoi(p);
+			p = strtok(NULL, "/");
+			strcpy(anfitrion, p);
+			p = strtok(NULL, "/");
+			strcpy(sino, p);
+
+			int socketAnfitrion = DameSocket(&UsuariosConectados, anfitrion);
+
+			sprintf(respuesta, "13/%d/%s/%s", IndicePartida, invitado,sino);
+			write(socketAnfitrion, respuesta, strlen(respuesta));
+			
+			if(strcmp(sino, "SI")==0)
+			{
+				pthread_mutex_lock(&mutex);
+				int res = Add(&listadePartidas.partidas[IndicePartida].UsuariosPartida, sock_conn, invitado);
+				if (res != 0)
+					printf("Error al añadir usuario al mover de invitado a conectado\n");
+				int eliminar = DesconectarUsuario(&listadePartidas.partidas[IndicePartida].UsuariosInvitados, invitado);
+				if (eliminar!=0)
+					printf("Error al eliminar usuario al mover usuario de invitado a conectado\n");				
+				pthread_mutex_unlock(&mutex);
+			}
+			for (int i = 0; i < UsuariosConectados.num; i++)
+				printf("conectado %s - %d\n", UsuariosConectados.sockets[i].usuario, UsuariosConectados.sockets[i].socket);
+
+
+			for (int i = 0; i < listadePartidas.partidas[IndicePartida].UsuariosInvitados.num; i++)
+				printf("invitado %s\n", listadePartidas.partidas[IndicePartida].UsuariosInvitados.sockets[i].usuario);
+			for (int i = 0; i < listadePartidas.partidas[IndicePartida].UsuariosPartida.num; i++)
+				printf("en partida %s\n", listadePartidas.partidas[IndicePartida].UsuariosPartida.sockets[i].usuario);
+
+		}
+		else if (codigo==15)//Mensajes del servidor 
+		{
+			
+		}
 		
 	}
 	close(sock_conn);
@@ -426,15 +549,24 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 	
 }
 
+void Inicializar()
+{
+	int i;
+	for(int i=0; i<MAX_PARTIDAS; i++)
+		listadePartidas.partidas[i].ID=0;
+	listadePartidas.num=0;
+	
+}
+
 int main(int argc, char *argv[])
 {	
 	UsuariosConectados.num=0;
-	UsuariosPartida.num=0;
 	listadePartidas.num=0;
 	
 	int sock_conn, sock_listen;
-	int puerto = 5004;
 	struct sockaddr_in serv_adr;
+	
+	Inicializar();
 	
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		printf("Error creant socket");
@@ -443,7 +575,7 @@ int main(int argc, char *argv[])
 	serv_adr.sin_family = AF_INET;
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	
-	serv_adr.sin_port = htons(puerto);
+	serv_adr.sin_port = htons(9100);
 	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
 		printf ("Error al bind\n");
 	

@@ -26,17 +26,22 @@ namespace Cliente1
         string usuarioRe;
         string contraseñaRe;
         int edad;
-        int puerto = 50004;
-        string ip = "147.83.117.22";
+        int puerto = 9100;
+        string ip = "192.168.56.102";
         int timePartida;
+        int indicePartida;
 
-        delegate void DelegadoParaPonerTexto(string texto);
+        delegate void DelegadoAddListBox(string texto);
+        delegate void DelegadoClearListBox();
+        delegate void DelegadoButtState(bool estado);
+
         public Iniciar()
         {
             InitializeComponent();
             DesconectarBtn.Enabled = false;
             EnviarPet.Enabled = false;
         }
+        /*
         public void PonFormConectar(string m) //Metodo para activar/desactivar algunos botones/text box cuando inicias sesion
         {
             try
@@ -52,7 +57,11 @@ namespace Cliente1
                 MessageBox.Show("Error al poner los datos del form");
             }
         }
-
+        */
+        public void AñadeLista(ListBox lista, string texto)
+        {
+            lista.Items.Add(texto);
+        }
         
 
         private void AtenderServidor()
@@ -211,6 +220,65 @@ namespace Cliente1
                                 MessageBox.Show("Error al procesar los datos de la respuesta 7");
                             }
                             break;
+                        case 10: //Recibes la respuesta de iniciar partida
+                            try
+                            {
+                                mensaje = trozos[1].Split('\0')[0];
+                                int indice = Convert.ToInt32(mensaje);
+                                if (indice != -1)
+                                {
+                                    MessageBox.Show("Partida creada correctamente "+ indice.ToString());
+                                    indicePartida = indice;
+                                }
+                                else
+                                    MessageBox.Show("No se ha podido crear la partida");
+                            }
+                            catch (FormatException)
+                            {
+                                MessageBox.Show("Error al procesar los datos de la respuesta 10");
+                            }
+
+                            break;
+                        case 14: //Recibes respuesta de la invitación
+                            try
+                            {
+                               
+                                mensaje = trozos[1].Split('\0')[0];
+                                int indice = Convert.ToInt32(mensaje);
+                                string anfitrion = trozos[2].Split('\0')[0];
+                                string resp = "NO";
+                                if (MessageBox.Show("Te ha invitado " + anfitrion + " a la partida " + indice.ToString(), "Aceptar?", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                                {
+                                     resp = "SI";
+                                }
+                              
+                                mensaje = "14/";
+                                mensaje += indice.ToString() + "/" + anfitrion + "/"+ resp;
+                                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                                server.Send(msg);
+
+                            }
+                            catch (FormatException)
+                            {
+                                MessageBox.Show("Error al procesar los datos de la respuesta 14");
+                            }
+
+                            break;
+                        case 15: //Recepción mensaje
+                            try
+                            {
+                                this.Invoke(new Action(() =>
+                                {
+                                    mensaje = trozos[1].Split('\0')[0];
+                                    listBox_Mensajes.Items.Add(mensaje);
+                                }));
+
+                            }
+                            catch (FormatException)
+                            {
+                                MessageBox.Show("Error al procesar los datos de la respuesta 3");
+                            }
+                            break;
                     }
                 }
 
@@ -330,6 +398,36 @@ namespace Cliente1
         private void groupBox1_Enter(object sender, EventArgs e)
         {
 
+        }
+
+        private void CrearBtn_Click(object sender, EventArgs e)
+        {
+            string mensaje;
+            mensaje = "10/";
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
+
+        }
+
+        private void InvitarBtn_Click(object sender, EventArgs e)
+        {
+            if (listBox_Conectados.SelectedItems.Count != 0)
+            {
+                string mensaje;
+                mensaje = "13/";
+                mensaje += indicePartida.ToString() + "/" + listBox_Conectados.SelectedItem.ToString();
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+        }
+
+        private void IniciarBtn_Click(object sender, EventArgs e)
+        {
+            string mensaje;
+            mensaje = "11/";
+            mensaje += indicePartida.ToString();
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+            server.Send(msg);
         }
     }
 
