@@ -37,7 +37,6 @@ namespace Cliente1
             this.SignInBtn = new System.Windows.Forms.Button();
             this.RegistrarseBtn = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.p4 = new System.Windows.Forms.RadioButton();
             this.p3 = new System.Windows.Forms.RadioButton();
             this.p2 = new System.Windows.Forms.RadioButton();
             this.p1 = new System.Windows.Forms.RadioButton();
@@ -114,7 +113,6 @@ namespace Cliente1
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.SystemColors.GradientInactiveCaption;
-            this.groupBox1.Controls.Add(this.p4);
             this.groupBox1.Controls.Add(this.p3);
             this.groupBox1.Controls.Add(this.p2);
             this.groupBox1.Controls.Add(this.p1);
@@ -126,17 +124,7 @@ namespace Cliente1
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Petición";
-            // 
-            // p4
-            // 
-            this.p4.AutoSize = true;
-            this.p4.Location = new System.Drawing.Point(99, 109);
-            this.p4.Name = "p4";
-            this.p4.Size = new System.Drawing.Size(128, 18);
-            this.p4.TabIndex = 11;
-            this.p4.TabStop = true;
-            this.p4.Text = "Dame lista conectados";
-            this.p4.UseVisualStyleBackColor = true;
+            this.groupBox1.Enter += new System.EventHandler(this.groupBox1_Enter);
             // 
             // p3
             // 
@@ -267,7 +255,6 @@ namespace Cliente1
         private System.Windows.Forms.Button EnviarPet;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.ListBox listBox_consultas;
-        private System.Windows.Forms.RadioButton p4;
         private System.Windows.Forms.Button DesconectarBtn;
         private System.Windows.Forms.ListBox listBox_Conectados;
     }

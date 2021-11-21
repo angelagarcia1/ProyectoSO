@@ -148,7 +148,7 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 		exit (1);
 	}
 	//Conectamos con la base de datos
-	conn = mysql_real_connect (conn, "localhost","root", "mysql", "Juego",0, NULL, 0);
+	conn = mysql_real_connect (conn, "shiva2.upc.es","root", "mysql", "M2_BBDDJuego",0, NULL, 0);
 	if (conn==NULL) 
 	{
 		printf ("Error al inicializar la conexion: %u %s\n",mysql_errno(conn), mysql_error(conn));
@@ -433,6 +433,7 @@ int main(int argc, char *argv[])
 	listadePartidas.num=0;
 	
 	int sock_conn, sock_listen;
+	int puerto = 5004;
 	struct sockaddr_in serv_adr;
 	
 	if ((sock_listen = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -442,7 +443,7 @@ int main(int argc, char *argv[])
 	serv_adr.sin_family = AF_INET;
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	
-	serv_adr.sin_port = htons(9100);
+	serv_adr.sin_port = htons(puerto);
 	if (bind(sock_listen, (struct sockaddr *) &serv_adr, sizeof(serv_adr)) < 0)
 		printf ("Error al bind\n");
 	

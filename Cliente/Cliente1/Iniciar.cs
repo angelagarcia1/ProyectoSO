@@ -26,17 +26,17 @@ namespace Cliente1
         string usuarioRe;
         string contraseñaRe;
         int edad;
-        int puerto = 9100;
-        string ip = "192.168.56.101";
+        int puerto = 50004;
+        string ip = "147.83.117.22";
         int timePartida;
-       delegate void DelegadoParaPonerTexto(string texto);
+
+        delegate void DelegadoParaPonerTexto(string texto);
         public Iniciar()
         {
             InitializeComponent();
             DesconectarBtn.Enabled = false;
             EnviarPet.Enabled = false;
         }
-
         public void PonFormConectar(string m) //Metodo para activar/desactivar algunos botones/text box cuando inicias sesion
         {
             try
@@ -290,14 +290,6 @@ namespace Cliente1
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
                 server.Send(msg);
             }
-            else if (p4.Checked)//Dame lista conectados 
-            {
-                string mensaje;
-
-                mensaje = "6/";
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
-                server.Send(msg);
-            }
 
         }
 
@@ -333,6 +325,11 @@ namespace Cliente1
             mensaje = "0/";
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
+        }
+
+        private void groupBox1_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 
