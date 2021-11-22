@@ -33,6 +33,6 @@ Version 4
 
 Generada por Andrea
 
-Verificada por Angela
+Verificada por Sara
 
-Explicada por Sara
+Explicada por Angela
