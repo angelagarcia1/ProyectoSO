@@ -54,6 +54,8 @@ namespace Cliente1
             this.label4 = new System.Windows.Forms.Label();
             this.listBox_Partida = new System.Windows.Forms.ListBox();
             this.CrearBtn = new System.Windows.Forms.Button();
+            this.ChatTbt = new System.Windows.Forms.TextBox();
+            this.CerrarBtn = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -249,6 +251,8 @@ namespace Cliente1
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.CerrarBtn);
+            this.groupBox3.Controls.Add(this.ChatTbt);
             this.groupBox3.Controls.Add(this.Mensajes);
             this.groupBox3.Controls.Add(this.listBox_Mensajes);
             this.groupBox3.Controls.Add(this.IniciarBtn);
@@ -316,6 +320,24 @@ namespace Cliente1
             this.CrearBtn.UseVisualStyleBackColor = true;
             this.CrearBtn.Click += new System.EventHandler(this.CrearBtn_Click);
             // 
+            // ChatTbt
+            // 
+            this.ChatTbt.Location = new System.Drawing.Point(276, 416);
+            this.ChatTbt.Name = "ChatTbt";
+            this.ChatTbt.Size = new System.Drawing.Size(247, 20);
+            this.ChatTbt.TabIndex = 6;
+            this.ChatTbt.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ChatTbt_KeyDown);
+            // 
+            // CerrarBtn
+            // 
+            this.CerrarBtn.Location = new System.Drawing.Point(133, 370);
+            this.CerrarBtn.Name = "CerrarBtn";
+            this.CerrarBtn.Size = new System.Drawing.Size(122, 23);
+            this.CerrarBtn.TabIndex = 7;
+            this.CerrarBtn.Text = "Cerrar Partida";
+            this.CerrarBtn.UseVisualStyleBackColor = true;
+            this.CerrarBtn.Click += new System.EventHandler(this.CerrarBtn_Click);
+            // 
             // Iniciar
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -370,6 +392,8 @@ namespace Cliente1
         private System.Windows.Forms.Button CrearBtn;
         private System.Windows.Forms.ListBox listBox_Mensajes;
         private System.Windows.Forms.Label Mensajes;
+        private System.Windows.Forms.TextBox ChatTbt;
+        private System.Windows.Forms.Button CerrarBtn;
     }
 }
 

@@ -70,6 +70,7 @@ namespace Cliente1
             {
                 while (true)
                 {
+          
                     int nform;
                     byte[] msg2 = new byte[80];
 
@@ -239,7 +240,7 @@ namespace Cliente1
                             }
 
                             break;
-                        case 14: //Recibes respuesta de la invitación
+                        case 14: //Recibes una invitación a una partida
                             try
                             {
                                
@@ -250,6 +251,7 @@ namespace Cliente1
                                 if (MessageBox.Show("Te ha invitado " + anfitrion + " a la partida " + indice.ToString(), "Aceptar?", MessageBoxButtons.YesNo) == DialogResult.Yes)
                                 {
                                      resp = "SI";
+                                    indicePartida = indice;
                                 }
                               
                                 mensaje = "14/";
@@ -428,6 +430,23 @@ namespace Cliente1
             mensaje += indicePartida.ToString();
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
+        }
+
+        private void ChatTbt_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                string mensaje;
+                mensaje = "15/";
+                mensaje += indicePartida.ToString() + "/" + ChatTbt.Text;
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
+                server.Send(msg);
+            }
+        }
+
+        private void CerrarBtn_Click(object sender, EventArgs e)
+        {
+
         }
     }
 

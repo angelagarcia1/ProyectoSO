@@ -540,6 +540,21 @@ void *AtenderalCliente (void *socket) //Funcion para atender al cliente
 		}
 		else if (codigo==15)//Mensajes del servidor 
 		{
+			char usuario[20];
+			DameNombre(&UsuariosConectados, sock_conn, usuario);
+			int IndicePartida;
+			char mensaje[20];
+			p = strtok(NULL, "/");
+			IndicePartida = atoi(p);
+			p = strtok(NULL, "/");
+			strcpy(mensaje, p);
+			sprintf(respuesta, "15/%s: %s", usuario, mensaje);
+			
+			for(int i=0;i < listadePartidas.partidas[IndicePartida].UsuariosPartida.num; i++)
+			{
+				write(listadePartidas.partidas[IndicePartida].UsuariosPartida.sockets[i].socket, respuesta, strlen(respuesta));
+				
+			}
 			
 		}
 		
